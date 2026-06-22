@@ -1,0 +1,71 @@
+<div class="chat-layout">
+  <header class="chat-header">
+    <h1>SupportBot</h1>
+    <p>Assistente de suporte técnico com IA</p>
+  </header>
+
+  <main class="chat-messages" [class.chat-messages--empty]="!hasMessages">
+    @if (!hasMessages) {
+      <div class="chat-greeting">
+        <mat-icon class="chat-greeting__icon">support_agent</mat-icon>
+        <h2>Olá! Como posso ajudar?</h2>
+        <p>Descreva o problema do usuário abaixo e receba uma solução sugerida pela IA.</p>
+      </div>
+    } @else {
+      @for (message of messages; track $index) {
+        <div class="message-group">
+          <div class="message message--user">
+            <span class="message__label">Problema relatado</span>
+            <p>{{ message.problema }}</p>
+          </div>
+
+          <div class="message message--assistant">
+            <span class="message__label">Resposta da IA</span>
+
+            @if (message.loading) {
+              <div class="message__loading">
+                <mat-spinner diameter="32"></mat-spinner>
+                <span>Analisando o problema...</span>
+              </div>
+            } @else if (message.error) {
+              <p class="message__error">{{ message.error }}</p>
+            } @else {
+              <div class="message__content">{{ message.resposta }}</div>
+            }
+          </div>
+        </div>
+      }
+    }
+  </main>
+
+  <footer class="chat-input">
+    <mat-form-field class="chat-input__field" appearance="outline">
+      <mat-label>Descreva o problema</mat-label>
+      <textarea
+        matInput
+        [formControl]="problemaControl"
+        rows="2"
+        placeholder="Ex.: usuário não consegue conectar na VPN após atualização"
+        (keydown.enter)="onEnter($event)"
+      ></textarea>
+      @if (problemaControl.touched && problemaControl.hasError('required')) {
+        <mat-error>Informe o problema</mat-error>
+      }
+      @if (problemaControl.touched && problemaControl.hasError('minlength')) {
+        <mat-error>Descreva o problema com pelo menos 3 caracteres</mat-error>
+      }
+    </mat-form-field>
+
+    <button
+      mat-fab
+      color="primary"
+      type="button"
+      class="chat-input__send"
+      [disabled]="problemaControl.invalid || enviando"
+      (click)="enviar()"
+      aria-label="Enviar"
+    >
+      <mat-icon>send</mat-icon>
+    </button>
+  </footer>
+</div>

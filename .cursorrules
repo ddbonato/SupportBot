@@ -1,0 +1,56 @@
+# Regras do Cursor para o projeto SupportBot
+
+## Contexto do projeto
+
+SupportBot é um assistente de suporte técnico com IA. Leia o arquivo PROJETO.md antes de qualquer implementação — ele contém todas as decisões de arquitetura, stack e fluxo.
+
+## Stack obrigatória
+
+- Backend: Java 17 + Spring Boot 3
+- Frontend: Angular 17+ com Angular Material
+- IA: Groq API com modelo llama-3.1-8b-instant
+- Base de conhecimento: arquivo CSV (backend/src/main/resources/knowledge.csv)
+- Banco: SQL Server com Spring Data JPA
+- Container: Docker + docker-compose
+
+## Regras de código — Backend (Java)
+
+- Usar Java 17 com records e features modernas quando apropriado
+- Sempre usar @Service, @RestController, @Repository nas classes corretas
+- Injeção de dependência via construtor, não via @Autowired em campo
+- Tratar exceções com @ControllerAdvice e respostas de erro padronizadas
+- Configurações sensíveis (API key, senha do banco) sempre via variáveis de ambiente, nunca hardcoded
+- Usar WebClient (não RestTemplate) para chamadas HTTP ao Groq
+- Validar o corpo das requisições com @Valid e Bean Validation
+- Documentar endpoints com anotações do Springdoc OpenAPI
+
+## Regras de código — Frontend (Angular)
+
+- Usar componentes standalone (Angular 17+)
+- Usar Reactive Forms para formulários
+- Usar HttpClient dentro de Services, nunca diretamente nos componentes
+- Tratar estados de loading e erro em toda chamada HTTP
+- Usar Angular Material para componentes visuais (mat-input, mat-button, mat-card)
+- Separar lógica de negócio nos Services, deixar componentes apenas para apresentação
+
+## Segurança
+
+- Nunca commitar a GROQ_API_KEY no repositório
+- Arquivo .env deve estar no .gitignore
+- CORS configurado apenas para localhost:4200 em desenvolvimento
+
+## Estrutura do prompt enviado ao Groq
+
+Sempre montar o prompt neste formato:
+1. Instrução de papel (assistente de suporte técnico)
+2. Conteúdo completo do knowledge.csv
+3. Problema relatado pelo técnico
+4. Formato esperado da resposta (diagnóstico, passo a passo, fallback)
+
+## O que não fazer
+
+- Não usar busca por palavras-chave no banco para selecionar contexto — o CSV inteiro vai no prompt
+- Não expor a GROQ_API_KEY em nenhum arquivo commitado
+- Não usar lógica de negócio diretamente nos Controllers
+- Não usar jQuery ou manipulação direta do DOM no Angular
+- Não criar endpoints sem tratamento de erro
