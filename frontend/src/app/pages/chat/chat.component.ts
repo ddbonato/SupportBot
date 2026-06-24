@@ -6,15 +6,21 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MarkdownComponent } from 'ngx-markdown';
 import { finalize } from 'rxjs';
 
 import { ConsultaService } from '../../services/consulta.service';
 
 interface ChatMessage {
+  id: number;
   problema: string;
   resposta?: string;
+  consultaId?: number;
   loading: boolean;
   error?: string;
+  feedback?: boolean;
+  feedbackEnviando?: boolean;
+  feedbackErro?: string;
 }
 
 @Component({
@@ -27,6 +33,7 @@ interface ChatMessage {
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MarkdownComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
@@ -34,6 +41,8 @@ interface ChatMessage {
 export class ChatComponent {
   private readonly consultaService = inject(ConsultaService);
   private readonly destroyRef = inject(DestroyRef);
+
+  private nextMessageId = 0;
 
   readonly problemaControl = new FormControl('', {
     nonNullable: true,
@@ -58,7 +67,11 @@ export class ChatComponent {
       return;
     }
 
-    const message: ChatMessage = { problema, loading: true };
+    const message: ChatMessage = {
+      id: ++this.nextMessageId,
+      problema,
+      loading: true,
+    };
     this.messages = [...this.messages, message];
     this.problemaControl.reset();
     this.enviando = true;
@@ -74,12 +87,44 @@ export class ChatComponent {
       .subscribe({
         next: (response) => {
           message.resposta = response.resposta;
+          message.consultaId = response.consultaId;
           message.loading = false;
         },
         error: () => {
           message.error =
             'Não foi possível obter uma resposta. Verifique se o backend está rodando e tente novamente.';
           message.loading = false;
+        },
+      });
+  }
+
+  enviarFeedback(message: ChatMessage, util: boolean): void {
+    if (
+      message.consultaId == null ||
+      message.feedback != null ||
+      message.feedbackEnviando
+    ) {
+      return;
+    }
+
+    message.feedbackEnviando = true;
+    message.feedbackErro = undefined;
+
+    this.consultaService
+      .enviarFeedback(message.consultaId, util)
+      .pipe(
+        finalize(() => {
+          message.feedbackEnviando = false;
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          message.feedback = util;
+        },
+        error: () => {
+          message.feedbackErro =
+            'Não foi possível registrar o feedback. Tente novamente.';
         },
       });
   }

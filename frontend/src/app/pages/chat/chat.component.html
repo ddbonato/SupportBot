@@ -12,7 +12,7 @@
         <p>Descreva o problema do usuário abaixo e receba uma solução sugerida pela IA.</p>
       </div>
     } @else {
-      @for (message of messages; track $index) {
+      @for (message of messages; track message.id) {
         <div class="message-group">
           <div class="message message--user">
             <span class="message__label">Problema relatado</span>
@@ -30,7 +30,38 @@
             } @else if (message.error) {
               <p class="message__error">{{ message.error }}</p>
             } @else {
-              <div class="message__content">{{ message.resposta }}</div>
+              <markdown class="message__content" [data]="message.resposta"></markdown>
+
+              <div class="message__feedback">
+                <span class="message__feedback-label">Esta resposta foi útil?</span>
+                <div class="message__feedback-actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="message__feedback-btn"
+                    [class.message__feedback-btn--selected]="message.feedback === true"
+                    [disabled]="message.feedback != null || message.feedbackEnviando"
+                    (click)="enviarFeedback(message, true)"
+                    aria-label="Resposta útil"
+                  >
+                    <mat-icon>thumb_up</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="message__feedback-btn"
+                    [class.message__feedback-btn--selected]="message.feedback === false"
+                    [disabled]="message.feedback != null || message.feedbackEnviando"
+                    (click)="enviarFeedback(message, false)"
+                    aria-label="Resposta não útil"
+                  >
+                    <mat-icon>thumb_down</mat-icon>
+                  </button>
+                </div>
+                @if (message.feedbackErro) {
+                  <span class="message__feedback-error">{{ message.feedbackErro }}</span>
+                }
+              </div>
             }
           </div>
         </div>

@@ -2,7 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ConsultaRequest, ConsultaResponse } from '../models/consulta.model';
+import {
+  ConsultaRequest,
+  ConsultaResponse,
+  FeedbackRequest,
+} from '../models/consulta.model';
 
 @Injectable({
   providedIn: 'root',
@@ -15,5 +19,10 @@ export class ConsultaService {
   consultar(problema: string): Observable<ConsultaResponse> {
     const body: ConsultaRequest = { problema };
     return this.http.post<ConsultaResponse>(this.apiUrl, body);
+  }
+
+  enviarFeedback(consultaId: number, util: boolean): Observable<void> {
+    const body: FeedbackRequest = { util };
+    return this.http.patch<void>(`${this.apiUrl}/${consultaId}/feedback`, body);
   }
 }
