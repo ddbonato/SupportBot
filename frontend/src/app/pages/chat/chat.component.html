@@ -1,13 +1,22 @@
 <div class="chat-layout">
   <header class="chat-header">
-    <h1>SupportBot</h1>
-    <p>Assistente de suporte técnico com IA</p>
+    <div class="chat-header__title">
+      <h1>SupportWizard</h1>
+      <p>Assistente de Suporte ICI</p>
+    </div>
+    <div class="chat-header__actions">
+      <a mat-stroked-button routerLink="/admin" class="app-header-btn">
+        Base de conhecimento
+      </a>
+      <button mat-stroked-button type="button" class="app-header-btn" (click)="sair()">
+        Sair
+      </button>
+    </div>
   </header>
 
   <main class="chat-messages" [class.chat-messages--empty]="!hasMessages">
     @if (!hasMessages) {
       <div class="chat-greeting">
-        <mat-icon class="chat-greeting__icon">support_agent</mat-icon>
         <h2>Olá! Como posso ajudar?</h2>
         <p>Descreva o problema do usuário abaixo e receba uma solução sugerida pela IA.</p>
       </div>
@@ -30,7 +39,7 @@
             } @else if (message.error) {
               <p class="message__error">{{ message.error }}</p>
             } @else {
-              <markdown class="message__content" [data]="message.resposta"></markdown>
+              <div class="message__content">{{ message.resposta }}</div>
 
               <div class="message__feedback">
                 <span class="message__feedback-label">Esta resposta foi útil?</span>

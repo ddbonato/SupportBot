@@ -1,0 +1,153 @@
+<div class="admin-layout">
+  <header class="admin-header">
+    <div class="admin-header__title">
+      <h1>SupportWizard</h1>
+      <p>Editor da base de conhecimento</p>
+    </div>
+    <div class="admin-header__actions">
+      <a mat-stroked-button routerLink="/" class="app-header-btn">
+        Página principal
+      </a>
+      @if (knowledgeAutenticado) {
+        <button mat-stroked-button type="button" class="app-header-btn" (click)="sairKnowledge()">
+          Sair
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (!knowledgeAutenticado) {
+    <section class="admin-panel admin-panel--login">
+      <h2>Acesso à base de conhecimento</h2>
+      <p>Informe a senha específica para editar os casos da base de conhecimento.</p>
+
+      <form class="admin-login-form" [formGroup]="loginForm" (ngSubmit)="entrarKnowledge()">
+        <mat-form-field class="admin-field" appearance="outline">
+          <mat-label>Senha</mat-label>
+          <input matInput type="password" formControlName="senha" autocomplete="current-password" />
+          @if (loginForm.controls.senha.touched && loginForm.controls.senha.hasError('required')) {
+            <mat-error>A senha é obrigatória</mat-error>
+          }
+        </mat-form-field>
+
+        @if (erro) {
+          <p class="admin-error">{{ erro }}</p>
+        }
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="carregando">
+          @if (carregando) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Entrar
+          }
+        </button>
+      </form>
+    </section>
+  } @else {
+    <main class="admin-main">
+      @if (exibindoFormulario) {
+        <section class="admin-panel admin-panel--form">
+          <h2>{{ editandoIndice != null ? 'Editar caso' : 'Novo caso' }}</h2>
+
+          <form class="admin-caso-form" [formGroup]="casoForm" (ngSubmit)="salvarCaso()">
+            <mat-form-field class="admin-field" appearance="outline">
+              <mat-label>Problema</mat-label>
+              <input matInput formControlName="problema" />
+              @if (casoForm.controls.problema.touched && casoForm.controls.problema.hasError('required')) {
+                <mat-error>O problema é obrigatório</mat-error>
+              }
+              @if (casoForm.controls.problema.touched && casoForm.controls.problema.hasError('minlength')) {
+                <mat-error>Mínimo de 3 caracteres</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field class="admin-field" appearance="outline">
+              <mat-label>Solução</mat-label>
+              <textarea matInput formControlName="solucao" rows="8"></textarea>
+              @if (casoForm.controls.solucao.touched && casoForm.controls.solucao.hasError('required')) {
+                <mat-error>A solução é obrigatória</mat-error>
+              }
+              @if (casoForm.controls.solucao.touched && casoForm.controls.solucao.hasError('minlength')) {
+                <mat-error>Mínimo de 3 caracteres</mat-error>
+              }
+            </mat-form-field>
+
+            @if (erro) {
+              <p class="admin-error">{{ erro }}</p>
+            }
+
+            <div class="admin-form-actions">
+              <button mat-stroked-button type="button" (click)="fecharFormulario()" [disabled]="salvando">
+                Cancelar
+              </button>
+              <button mat-flat-button color="primary" type="submit" [disabled]="salvando">
+                @if (salvando) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                } @else {
+                  Salvar
+                }
+              </button>
+            </div>
+          </form>
+        </section>
+      } @else {
+        <section class="admin-toolbar">
+          <mat-form-field class="admin-field admin-field--search" appearance="outline">
+            <mat-label>Buscar casos</mat-label>
+            <input matInput [formControl]="buscaControl" placeholder="Problema ou solução..." />
+            <mat-icon matPrefix>search</mat-icon>
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="button" (click)="abrirNovoCaso()">
+            <mat-icon>add</mat-icon>
+            Novo caso
+          </button>
+        </section>
+
+        @if (erro) {
+          <p class="admin-error admin-error--banner">{{ erro }}</p>
+        }
+
+        @if (carregando) {
+          <div class="admin-loading">
+            <mat-spinner diameter="40"></mat-spinner>
+            <span>Carregando casos...</span>
+          </div>
+        } @else if (casosFiltrados.length === 0) {
+          <section class="admin-panel admin-panel--empty">
+            <p>Nenhum caso encontrado.</p>
+          </section>
+        } @else {
+          <ul class="admin-lista">
+            @for (caso of casosFiltrados; track caso.indice) {
+              <li class="admin-item">
+                <div class="admin-item__content">
+                  <h3>{{ truncar(caso.problema, 100) }}</h3>
+                  <p>{{ truncar(caso.solucao, 160) }}</p>
+                </div>
+                <div class="admin-item__actions">
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Editar caso"
+                    (click)="abrirEdicao(caso)"
+                  >
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Excluir caso"
+                    (click)="excluirCaso(caso)"
+                  >
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </main>
+  }
+</div>

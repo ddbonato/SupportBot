@@ -1,0 +1,33 @@
+<div class="login-layout">
+  <header class="login-header">
+    <h1>SupportWizard</h1>
+    <p>Assistente de Suporte ICI</p>
+  </header>
+
+  <section class="login-panel">
+    <h2>Acesso ao chat</h2>
+    <p>Informe a senha para utilizar o assistente de suporte.</p>
+
+    <form class="login-form" [formGroup]="loginForm" (ngSubmit)="entrar()">
+      <mat-form-field class="login-field" appearance="outline">
+        <mat-label>Senha</mat-label>
+        <input matInput type="password" formControlName="senha" autocomplete="current-password" />
+        @if (loginForm.controls.senha.touched && loginForm.controls.senha.hasError('required')) {
+          <mat-error>A senha é obrigatória</mat-error>
+        }
+      </mat-form-field>
+
+      @if (erro) {
+        <p class="login-error">{{ erro }}</p>
+      }
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="carregando">
+        @if (carregando) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          Entrar
+        }
+      </button>
+    </form>
+  </section>
+</div>

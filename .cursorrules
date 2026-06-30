@@ -1,8 +1,8 @@
-# Regras do Cursor para o projeto SupportBot
+# Regras do Cursor para o projeto SupportWizard
 
 ## Contexto do projeto
 
-SupportBot é um assistente de suporte técnico com IA. Leia o arquivo PROJETO.md antes de qualquer implementação — ele contém todas as decisões de arquitetura, stack e fluxo.
+SupportWizard é um assistente de suporte técnico com IA. Leia o arquivo PROJETO.md antes de qualquer implementação — ele contém todas as decisões de arquitetura, stack e fluxo.
 
 ## Stack obrigatória
 

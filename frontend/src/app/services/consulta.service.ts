@@ -12,7 +12,7 @@ import {
   providedIn: 'root',
 })
 export class ConsultaService {
-  private readonly apiUrl = 'http://localhost:8080/api/consulta';
+  private readonly apiUrl = '/api/consulta';
 
   constructor(private readonly http: HttpClient) {}
 

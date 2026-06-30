@@ -1,19 +1,25 @@
-# SupportBot — Instruções do Projeto
+# SupportWizard — Instruções do Projeto
 
 ## O que é este projeto
 
-SupportBot é um assistente de suporte técnico com IA. O técnico digita a descrição de um problema, o sistema lê uma base de conhecimento em CSV e envia tudo para uma IA que retorna a solução mais adequada de forma organizada.
+SupportWizard é um assistente de suporte técnico com IA para a equipe de suporte da ICI. O técnico descreve um problema no chat; o sistema filtra a base de conhecimento em CSV, monta um prompt e consulta um modelo de linguagem local (Ollama) para devolver a solução mais adequada.
 
-Este arquivo contém todas as decisões de arquitetura, stack e fluxo do projeto. Use-o como referência principal durante o desenvolvimento.
+**Este arquivo é a referência principal de arquitetura.** Leia-o antes de qualquer implementação.
 
 ---
 
-## Objetivo
+## Identificadores do projeto
 
-Construir uma aplicação web fullstack onde o técnico de suporte:
-1. Acessa uma interface estilo chat
-2. Digita a descrição de um problema
-3. Recebe uma solução estruturada gerada por IA, baseada numa base de conhecimento real
+| Item | Valor |
+|---|---|
+| Pacote Java | `com.supportwizard` |
+| Classe principal | `SupportWizardApplication` |
+| Artifact Maven | `supportwizard-backend` |
+| Projeto Angular | `supportwizard` |
+| Build frontend | `frontend/dist/supportwizard/browser` |
+| Banco SQL Server | `databaseName=supportwizard` |
+| Banco H2 (local) | `jdbc:h2:mem:supportwizard` |
+| Senha padrão SQL Server (dev) | `SupportWizard@123` |
 
 ---
 
@@ -21,13 +27,15 @@ Construir uma aplicação web fullstack onde o técnico de suporte:
 
 | Camada | Tecnologia | Observação |
 |---|---|---|
-| Frontend | Angular 17+ | Interface estilo chat com Angular Material |
-| Backend | Java 17 + Spring Boot 3 | API REST |
-| IA | Groq API | Gratuito — modelo llama-3.1-8b-instant |
-| Base de conhecimento | Arquivo CSV | Duas colunas: problema, solucao |
-| Banco de dados | SQL Server | Apenas histórico de consultas e feedbacks |
-| Container | Docker + docker-compose | Backend + banco juntos |
-| CI | GitHub Actions | Roda testes no push para main |
+| Frontend | Angular 17+ | Standalone components, Angular Material, ngx-markdown |
+| Backend | Java 17 + Spring Boot 3.2.5 | API REST + servidor de arquivos estáticos |
+| IA | **Ollama** (local) | Modelo `qwen2.5:7b` em `http://172.16.24.85:11434` |
+| Base de conhecimento | Arquivo CSV | Colunas `problema,solucao` — ~30 entradas ICI |
+| Banco de dados | SQL Server (prod) / H2 (dev local) | Histórico de consultas e feedback |
+| Build | Maven Wrapper 3.9.6 | `backend/mvnw.cmd` — não exige Maven global |
+| Container | Docker Compose | Apenas SQL Server (`docker-compose.yml`) |
+
+> **Histórico:** o projeto iniciou com Groq API (`llama-3.1-8b-instant`). Foi migrado para Ollama local. Não há mais `GroqService` no código.
 
 ---
 
@@ -36,326 +44,303 @@ Construir uma aplicação web fullstack onde o técnico de suporte:
 ```
 Técnico digita o problema
         ↓
-    Angular (frontend)
-    envia POST /api/consulta
+    Angular (chat) — POST /api/consulta  (URL relativa, mesmo servidor em produção)
         ↓
-    Spring Boot (backend)
-    1. Lê o arquivo knowledge.csv inteiro
-    2. Monta o prompt com o CSV + problema
-    3. Chama a Groq API
-    4. Salva a consulta no SQL Server
-    5. Retorna a resposta
+    ConsultaController → ConsultaService
+        1. KnowledgeService filtra linhas do CSV por palavras-chave da pergunta
+        2. Monta prompt com trechos filtrados + instrução de copiar exatamente
+        3. OllamaService chama POST /api/generate no Ollama
+        4. Salva consulta no banco (H2 ou SQL Server)
+        5. Retorna { resposta, consultaId }
         ↓
-    Groq API
-    recebe o CSV como contexto
-    identifica a solução mais adequada
-    retorna resposta formatada
+    Angular exibe resposta (Markdown) + botões 👍 👎
         ↓
-    Angular exibe a resposta no chat
+    PATCH /api/consulta/{id}/feedback
 ```
 
-### Ponto importante da arquitetura
+### Pontos importantes
 
-A IA (Groq) **não acessa o banco de dados diretamente**. Quem faz isso é o Spring Boot. O Groq recebe apenas uma mensagem de texto com o conteúdo do CSV colado dentro do prompt. Isso é simples, eficiente e suficiente para o tamanho da base de conhecimento de suporte técnico.
+- A IA **não acessa o banco** nem o CSV diretamente — o Spring Boot monta o prompt.
+- O `KnowledgeService` **filtra** o CSV por palavras-chave extraídas da pergunta (não envia o CSV inteiro quando há matches). Se nenhuma linha pontuar, envia todas.
+- O prompt instrui o modelo a **copiar exatamente** o trecho relevante (senhas, fatos simples, etc.).
+- Em produção (JAR único), frontend e backend rodam no **mesmo processo** na porta 8080.
 
 ---
 
 ## Base de conhecimento (knowledge.csv)
 
-Arquivo CSV com duas colunas. Deve ficar em `backend/src/main/resources/knowledge.csv`.
+### Formato
 
-```
+```csv
 problema,solucao
-"Usuário não consegue conectar na VPN","1. Verificar se o cliente VPN está atualizado\n2. Verificar credenciais\n3. Reiniciar o serviço VPN"
-"Computador não liga após queda de energia","1. Verificar cabo de força\n2. Testar a tomada\n3. Verificar fonte de alimentação"
+"Descrição do problema","Solução ou informação (pode ter \\n para quebras de linha)"
 ```
 
-O Spring Boot lê esse arquivo a cada consulta e inclui o conteúdo inteiro no prompt enviado ao Groq.
+### Localização dos arquivos
 
----
+| Arquivo | Uso |
+|---|---|
+| `knowledge.csv` (raiz do repo) | Cópia de trabalho / referência |
+| `backend/src/main/resources/knowledge.csv` | Embutido no JAR (`classpath:knowledge.csv`) |
+| Caminho externo (opcional) | Configurável via `knowledge.csv.path` |
 
-## Estrutura de pastas do projeto
-
-```
-supportbot/
-├── PROJETO.md                         ← este arquivo
-├── docker-compose.yml
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-│
-├── backend/
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/
-│       └── main/
-│           ├── java/com/supportbot/
-│           │   ├── SupportBotApplication.java
-│           │   ├── controller/
-│           │   │   └── ConsultaController.java    ← POST /api/consulta
-│           │   ├── service/
-│           │   │   ├── ConsultaService.java       ← orquestra o fluxo
-│           │   │   ├── GroqService.java           ← chama a Groq API
-│           │   │   └── KnowledgeService.java      ← lê o CSV
-│           │   ├── repository/
-│           │   │   └── ConsultaRepository.java
-│           │   └── model/
-│           │       └── Consulta.java              ← entidade JPA
-│           └── resources/
-│               ├── application.properties
-│               └── knowledge.csv                  ← base de conhecimento
-│
-└── frontend/
-    ├── src/
-    │   └── app/
-    │       ├── app.component.ts
-    │       ├── pages/
-    │       │   └── chat/
-    │       │       ├── chat.component.ts
-    │       │       ├── chat.component.html
-    │       │       └── chat.component.scss
-    │       └── services/
-    │           └── consulta.service.ts            ← HttpClient para o backend
-    └── angular.json
-```
-
----
-
-## Backend — detalhes de implementação
-
-### Dependências do pom.xml
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-webflux</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>com.microsoft.sqlserver</groupId>
-        <artifactId>mssql-jdbc</artifactId>
-    </dependency>
-    <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <optional>true</optional>
-    </dependency>
-    <dependency>
-        <groupId>org.springdoc</groupId>
-        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        <version>2.3.0</version>
-    </dependency>
-</dependencies>
-```
-
-### application.properties
+### Propriedade configurável
 
 ```properties
-# Servidor
+# Padrão — lê do classpath (dentro do JAR)
+knowledge.csv.path=classpath:knowledge.csv
+
+# Produção — CSV externo editável sem recompilar
+knowledge.csv.path=C:\SupportWizard\knowledge.csv
+```
+
+O `KnowledgeService` injeta `@Value("${knowledge.csv.path}")`:
+- Se começa com `classpath:` → `ResourceLoader`
+- Caso contrário → `Files.readString(Path.of(caminho))`
+
+### Busca por palavras-chave
+
+1. Extrai palavras da pergunta (remove stop words em português, mínimo 3 caracteres)
+2. Pontua cada linha: +3 se palavra aparece em `problema`, +2 se em `solucao`
+3. Retorna linhas com pontuação > 0, ordenadas por relevância
+4. Log de debug temporário quando a pergunta contém `"qual a senha da bios"` (verificar linhas retornadas)
+
+**Exemplo validado:** pergunta `"qual a senha da BIOS"` → retorna linha *"Senhas padrão dos sistemas ICI"* → resposta `BIOS: cmos98`.
+
+---
+
+## Estrutura de pastas
+
+```
+SupportWizard/
+├── PROJETO.md
+├── SETUP.md
+├── knowledge.csv                    ← base de conhecimento (cópia na raiz)
+├── docker-compose.yml               ← só SQL Server
+├── .env.example
+├── scripts/
+│   └── run-backend.ps1
+│
+├── backend/
+│   ├── mvnw / mvnw.cmd              ← Maven Wrapper
+│   ├── .mvn/wrapper/
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/supportwizard/
+│       │   ├── SupportWizardApplication.java
+│       │   ├── config/
+│       │   │   ├── CorsConfig.java          ← CORS /api/** para 172.16.x.x
+│       │   │   ├── OllamaConfig.java
+│       │   │   ├── OllamaProperties.java
+│       │   │   └── SpaResourceConfig.java   ← serve Angular + fallback index.html
+│       │   ├── controller/
+│       │   │   ├── ConsultaController.java  ← POST /api/consulta, PATCH feedback
+│       │   │   └── GlobalExceptionHandler.java
+│       │   ├── service/
+│       │   │   ├── ConsultaService.java     ← orquestra fluxo + monta prompt
+│       │   │   ├── KnowledgeService.java    ← lê/filtra CSV
+│       │   │   └── OllamaService.java       ← chama Ollama /api/generate
+│       │   ├── dto/  (ConsultaRequest, ConsultaResponse, FeedbackRequest)
+│       │   ├── model/Consulta.java
+│       │   └── repository/ConsultaRepository.java
+│       └── resources/
+│           ├── application.properties
+│           ├── application-local.properties
+│           └── knowledge.csv
+│
+└── frontend/
+    ├── angular.json                   ← projeto "supportwizard", dist/supportwizard
+    └── src/app/
+        ├── pages/chat/                ← interface de chat
+        └── services/consulta.service.ts ← POST /api/consulta (URL relativa)
+```
+
+---
+
+## Backend — configuração
+
+### application.properties (perfil default — SQL Server)
+
+```properties
 server.port=8080
 
-# Banco de dados
-spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=supportbot;encrypt=false
+spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=supportwizard;encrypt=false
 spring.datasource.username=${DB_USER}
 spring.datasource.password=${DB_PASS}
 spring.jpa.hibernate.ddl-auto=update
 
-# Groq API
-groq.api.url=https://api.groq.com/openai/v1/chat/completions
-groq.api.key=${GROQ_API_KEY}
-groq.api.model=llama-3.1-8b-instant
+ollama.api.url=http://172.16.24.85:11434/api/generate
+ollama.api.model=qwen2.5:7b
 
-# CORS (permitir chamadas do Angular)
-spring.web.cors.allowed-origins=http://localhost:4200
+spring.web.cors.allowed-origin-patterns=http://localhost:*,http://127.0.0.1:*,http://172.16.*.*:*
+
+knowledge.csv.path=classpath:knowledge.csv
 ```
 
-### Prompt que o Spring Boot monta e envia ao Groq
+### application-local.properties (perfil `local` — H2 em memória)
+
+Mesmas configs de Ollama, CORS e knowledge. Substitui datasource por H2:
+
+```properties
+spring.datasource.url=jdbc:h2:mem:supportwizard;DB_CLOSE_DELAY=-1
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+```
+
+### Prompt enviado ao Ollama
 
 ```
 Você é um assistente especializado em suporte técnico de TI.
 Use APENAS as soluções abaixo como referência para responder.
 Não invente informações que não estejam na base.
 
+Copy the answer EXACTLY as written. Do not explain, do not add steps, do not invent procedures.
+If the information is a simple fact like a password, respond with just that fact.
+
 === BASE DE CONHECIMENTO ===
-[conteúdo inteiro do knowledge.csv]
+[linhas filtradas do CSV]
 
 === PROBLEMA RELATADO ===
-[texto digitado pelo técnico]
+[texto do técnico]
 
-Responda com:
-1. Diagnóstico provável
-2. Passo a passo da solução
-3. O que fazer se não resolver
+Responda copiando exatamente o trecho relevante da base de conhecimento, sem reformular.
 ```
 
-### Endpoint principal
+### Endpoints
 
-```
-POST /api/consulta
-Content-Type: application/json
-
-{
-  "problema": "usuário não consegue conectar na VPN após atualização"
-}
-
-Resposta:
-{
-  "resposta": "...",
-  "consultaId": 1
-}
-```
+| Método | Rota | Descrição |
+|---|---|---|
+| POST | `/api/consulta` | Envia problema, retorna resposta da IA |
+| PATCH | `/api/consulta/{id}/feedback` | Registra feedback (`{ "util": true/false }`) |
+| GET | `/swagger-ui.html` | Documentação OpenAPI |
+| GET | `/` | Frontend Angular (quando empacotado no JAR) |
 
 ---
 
-## Banco de dados — SQL Server
+## Build — JAR único (backend + frontend)
 
-### Tabela de histórico
+O `pom.xml` usa `frontend-maven-plugin` na fase `prepare-package`:
 
-```sql
-CREATE TABLE consultas (
-    id          INT PRIMARY KEY IDENTITY,
-    problema    TEXT NOT NULL,
-    resposta    TEXT NOT NULL,
-    util        BIT NULL,
-    criado_em   DATETIME DEFAULT GETDATE()
-)
+1. `npm install --legacy-peer-deps`
+2. `npm run build` (Angular → `frontend/dist/supportwizard/browser`)
+3. Copia para `target/classes/static`
+4. Spring Boot repackage → JAR executável
+
+```powershell
+cd backend
+$env:MAVEN_OPTS = "-Djavax.net.ssl.trustStoreType=Windows-ROOT"
+.\mvnw.cmd clean package -DskipTests
+java -jar target/supportwizard-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
 ```
 
-O campo `util` é atualizado pelo feedback do técnico (👍 ou 👎) após receber a resposta.
+Acesse **http://localhost:8080** — frontend e API no mesmo servidor.
 
-### Endpoint de feedback
+Propriedade `skip.frontend.build=true` pula o build Angular (útil para compilar só o backend).
 
-```
-PATCH /api/consulta/{id}/feedback
-Content-Type: application/json
+### Servir SPA (SpaResourceConfig)
 
-{
-  "util": true
-}
-```
+- Arquivos estáticos em `classpath:/static/`
+- Rotas desconhecidas → `index.html` (roteamento Angular)
+- Exclui `/api/**`, `/swagger-ui/**`, `/v3/api-docs/**`
 
 ---
 
-## Frontend — detalhes de implementação
+## Banco de dados
 
-### Interface
+### Entidade Consulta (JPA)
 
-A tela única do SupportBot deve ter:
-- Saudação inicial centralizada quando não há mensagens
-- Campo de texto na parte inferior para digitar o problema
-- Botão enviar ao lado do campo
-- Área de conversa exibindo o problema enviado e a resposta da IA
-- Indicador de carregamento enquanto aguarda resposta
-- Botões 👍 👎 abaixo de cada resposta para feedback
+| Campo | Tipo | Descrição |
+|---|---|---|
+| id | Long | PK auto-increment |
+| problema | String | Texto enviado pelo técnico |
+| resposta | String | Resposta da IA |
+| util | Boolean | Feedback (null = sem feedback) |
+| criadoEm | LocalDateTime | Timestamp da consulta |
 
-### Tecnologias Angular
+---
 
-- Angular Material para componentes visuais
-- ReactiveFormsModule para o campo de texto
-- HttpClient para chamadas ao backend
-- RxJS para gerenciar o estado de carregamento
+## Frontend
+
+- Componente standalone `ChatComponent` com Angular Material
+- Respostas renderizadas com **ngx-markdown**
+- API via URL relativa `/api/consulta` (funciona no JAR único e com proxy em dev)
+- Feedback 👍 👎 implementado (`PATCH /api/consulta/{id}/feedback`)
+- Tema visual ICI (imagens em `frontend/src/assets/`)
+
+### Desenvolvimento separado
+
+```powershell
+# Terminal 1 — backend (perfil local, H2)
+cd scripts
+.\run-backend.ps1
+
+# Terminal 2 — frontend
+cd frontend
+npm install --legacy-peer-deps
+npm start
+# → http://localhost:4200
+```
 
 ---
 
 ## Docker
 
-### docker-compose.yml
+`docker-compose.yml` sobe **apenas o SQL Server**:
 
 ```yaml
-version: '3.8'
 services:
-  backend:
-    build: ./backend
-    ports:
-      - "8080:8080"
-    environment:
-      - DB_USER=sa
-      - DB_PASS=SupportBot@123
-      - GROQ_API_KEY=${GROQ_API_KEY}
-    depends_on:
-      - db
-
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=SupportBot@123
+      SA_PASSWORD: SupportWizard@123
     ports:
       - "1433:1433"
 ```
 
-A `GROQ_API_KEY` deve ser definida em um arquivo `.env` local (nunca commitar no GitHub).
+Subir: `docker compose up -d db`
+
+Backend com SQL Server: `.\run-backend.ps1 --sqlserver` (define `DB_USER`/`DB_PASS` se ausentes).
 
 ---
 
-## GitHub Actions — CI
+## Regras de código (resumo)
 
-```yaml
-name: CI
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Build e testes
-        run: mvn test
-        working-directory: ./backend
-```
+- Injeção de dependência **via construtor**
+- `@Service`, `@RestController`, `@Repository` nas classes corretas
+- WebClient para chamadas HTTP ao Ollama (não RestTemplate)
+- Configurações sensíveis via variáveis de ambiente — nunca hardcoded no repo
+- Componentes Angular standalone; HttpClient apenas em Services
+- Tratamento de erro com `@ControllerAdvice`
 
 ---
 
-## Ordem de desenvolvimento recomendada
+## Estado atual (jun/2026)
 
-### Fase 0 — Preparação
-- [ ] Criar conta no Groq e gerar API key em console.groq.com
-- [ ] Criar repositório no GitHub
-- [ ] Criar o arquivo knowledge.csv com 10 a 20 casos reais do suporte
-- [ ] Montar a estrutura de pastas do projeto
+### Concluído
+- Backend Spring Boot completo com Ollama
+- Frontend Angular com chat, Markdown e feedback
+- Renomeação completa SupportBot → SupportWizard
+- Busca por palavras-chave no KnowledgeService
+- CSV configurável (`knowledge.csv.path`)
+- JAR único com frontend embutido
+- Maven Wrapper
+- CORS para rede interna 172.16.x.x
+- Perfil local (H2) e perfil SQL Server
 
-### Fase 1 — Backend
-- [ ] Criar projeto Spring Boot via Spring Initializr
-- [ ] Configurar conexão com SQL Server
-- [ ] Criar entidade Consulta e repository JPA
-- [ ] Implementar KnowledgeService (leitura do CSV)
-- [ ] Implementar GroqService (chamada à API)
-- [ ] Implementar ConsultaService (orquestração do fluxo)
-- [ ] Implementar ConsultaController (endpoints REST)
-- [ ] Testar endpoint com Postman ou curl
-
-### Fase 2 — Frontend
-- [ ] Criar projeto Angular com Angular Material
-- [ ] Criar ConsultaService com HttpClient
-- [ ] Implementar tela de chat
-- [ ] Conectar com o backend
-
-### Fase 3 — Infraestrutura
-- [ ] Criar Dockerfile do backend
-- [ ] Criar docker-compose.yml
-- [ ] Configurar GitHub Actions
-- [ ] Escrever README com instruções e screenshots
+### Pendente / melhorias futuras
+- Dockerizar o backend no `docker-compose.yml`
+- GitHub Actions (CI)
+- Atualizar `run-backend.ps1` para usar `mvnw` em vez de `.tools/apache-maven`
+- Atualizar `.cursorrules` (ainda menciona Groq)
+- Remover log de debug temporário do KnowledgeService quando estável
+- Sincronizar automaticamente `knowledge.csv` da raiz para `backend/src/main/resources/`
 
 ---
 
 ## Observações importantes
 
-- A `GROQ_API_KEY` nunca deve ser commitada no repositório. Usar variável de ambiente ou arquivo `.env` no `.gitignore`.
-- O arquivo `knowledge.csv` deve ser preenchido com casos reais do trabalho de suporte técnico. Quanto mais detalhadas as soluções, melhor a qualidade das respostas da IA.
-- O Spring Boot lê o CSV a cada requisição. Se a base crescer muito (milhares de linhas), considerar cache ou leitura na inicialização.
-- O Groq foi testado e confirmado com acesso liberado (HTTP 200) no ambiente de desenvolvimento.
+- O servidor Ollama (`172.16.24.85:11434`) precisa estar acessível na rede. A primeira resposta pode levar ~30–60 s.
+- Após editar `backend/src/main/resources/knowledge.csv`, é necessário **rebuild** do backend (ou usar `knowledge.csv.path` externo).
+- Em redes corporativas, usar `MAVEN_OPTS=-Djavax.net.ssl.trustStoreType=Windows-ROOT` para builds Maven/npm via plugin.
+- O `npm install` no build Maven usa `--legacy-peer-deps` (conflito `marked` vs `ngx-markdown`).

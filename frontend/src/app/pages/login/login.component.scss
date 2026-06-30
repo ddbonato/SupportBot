@@ -1,0 +1,109 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: url('/assets/fundo.png') center / cover fixed;
+  color: #fff;
+}
+
+.login-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.login-header {
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.875rem;
+  }
+}
+
+.login-panel {
+  max-width: 420px;
+  margin: 3rem auto;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #fff;
+  }
+
+  p {
+    margin: 0 0 1.25rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.5;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.login-error {
+  margin: 0;
+  color: #ef9a9a;
+  font-size: 0.875rem;
+}
+
+.login-field {
+  width: 100%;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 4px;
+    }
+
+    .mat-mdc-form-field-focus-overlay {
+      background: transparent;
+    }
+
+    .mdc-text-field--outlined .mdc-notched-outline__leading,
+    .mdc-text-field--outlined .mdc-notched-outline__notch,
+    .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    .mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__leading,
+    .mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__notch,
+    .mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .mat-mdc-input-element,
+    .mat-mdc-floating-label {
+      color: #fff !important;
+    }
+
+    .mat-mdc-floating-label {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    .mat-mdc-form-field-error {
+      color: #ef9a9a;
+    }
+  }
+}

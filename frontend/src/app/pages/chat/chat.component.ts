@@ -1,15 +1,16 @@
 import { Component, DestroyRef, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MarkdownComponent } from 'ngx-markdown';
 import { finalize } from 'rxjs';
 
 import { ConsultaService } from '../../services/consulta.service';
+import { AuthService } from '../../services/auth.service';
 
 interface ChatMessage {
   id: number;
@@ -28,18 +29,20 @@ interface ChatMessage {
   standalone: true,
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MarkdownComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
 })
 export class ChatComponent {
   private readonly consultaService = inject(ConsultaService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   private nextMessageId = 0;
@@ -135,5 +138,10 @@ export class ChatComponent {
       event.preventDefault();
       this.enviar();
     }
+  }
+
+  sair(): void {
+    this.authService.clearAll();
+    this.router.navigate(['/login']);
   }
 }

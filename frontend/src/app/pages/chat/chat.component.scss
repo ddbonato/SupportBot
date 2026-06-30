@@ -1,6 +1,8 @@
 :host {
   display: block;
   height: 100vh;
+  background: url('/assets/fundo.png') center / cover fixed;
+  color: #fff;
 }
 
 .chat-layout {
@@ -12,18 +14,36 @@
 }
 
 .chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  &__title {
+    min-width: 0;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
 
   h1 {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
+    color: #fff;
   }
 
   p {
     margin: 0.25rem 0 0;
-    color: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.75);
     font-size: 0.875rem;
   }
 }
@@ -43,26 +63,23 @@
 .chat-greeting {
   text-align: center;
   max-width: 420px;
-  color: rgba(0, 0, 0, 0.7);
-
-  &__icon {
-    width: 4rem;
-    height: 4rem;
-    font-size: 4rem;
-    color: var(--mat-sys-primary, #1565c0);
-    margin-bottom: 1rem;
-  }
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.85);
 
   h2 {
     margin: 0 0 0.5rem;
     font-size: 1.5rem;
     font-weight: 500;
-    color: rgba(0, 0, 0, 0.87);
+    color: #fff;
   }
 
   p {
     margin: 0;
     line-height: 1.5;
+    color: rgba(255, 255, 255, 0.8);
   }
 }
 
@@ -76,6 +93,9 @@
 .message {
   padding: 1rem 1.25rem;
   border-radius: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.9);
 
   &__label {
     display: block;
@@ -84,22 +104,21 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 0.5rem;
-    opacity: 0.7;
+    color: rgba(255, 255, 255, 0.65);
   }
 
   p {
     margin: 0;
     line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
   }
 
   &--user {
-    background: #e3f2fd;
     align-self: flex-end;
     max-width: 85%;
   }
 
   &--assistant {
-    background: #f5f5f5;
     align-self: flex-start;
     max-width: 100%;
   }
@@ -107,11 +126,14 @@
   &__content {
     display: block;
     line-height: 1.6;
+    white-space: pre-line;
+    color: rgba(255, 255, 255, 0.9);
 
     :is(h1, h2, h3, h4) {
       margin: 1rem 0 0.5rem;
       font-weight: 600;
       line-height: 1.3;
+      color: #fff;
 
       &:first-child {
         margin-top: 0;
@@ -120,6 +142,7 @@
 
     p {
       margin: 0 0 0.75rem;
+      color: rgba(255, 255, 255, 0.9);
 
       &:last-child {
         margin-bottom: 0;
@@ -136,14 +159,15 @@
     }
 
     code {
-      background: rgba(0, 0, 0, 0.06);
+      background: rgba(255, 255, 255, 0.12);
       padding: 0.125rem 0.375rem;
       border-radius: 4px;
       font-size: 0.875em;
+      color: #fff;
     }
 
     pre {
-      background: rgba(0, 0, 0, 0.06);
+      background: rgba(255, 255, 255, 0.1);
       padding: 0.75rem 1rem;
       border-radius: 8px;
       overflow-x: auto;
@@ -157,6 +181,7 @@
 
     strong {
       font-weight: 600;
+      color: #fff;
     }
   }
 
@@ -167,12 +192,12 @@
     gap: 0.5rem;
     margin-top: 1rem;
     padding-top: 0.75rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   &__feedback-label {
     font-size: 0.8125rem;
-    color: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.7);
   }
 
   &__feedback-actions {
@@ -181,28 +206,28 @@
   }
 
   &__feedback-btn {
-    color: rgba(0, 0, 0, 0.54);
+    color: rgba(255, 255, 255, 0.7);
 
     &--selected {
-      color: var(--mat-sys-primary, #1565c0);
+      color: #64b5f6;
     }
   }
 
   &__feedback-error {
     width: 100%;
     font-size: 0.8125rem;
-    color: #c62828;
+    color: #ef9a9a;
   }
 
   &__loading {
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.75);
   }
 
   &__error {
-    color: #c62828;
+    color: #ef9a9a;
     margin: 0;
   }
 }
@@ -212,8 +237,9 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
 
   &__field {
     flex: 1;
@@ -223,5 +249,45 @@
   &__send {
     flex-shrink: 0;
     margin-top: 0.25rem;
+  }
+}
+
+.chat-input__field {
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 4px;
+    }
+
+    .mat-mdc-form-field-focus-overlay {
+      background: transparent;
+    }
+
+    .mdc-text-field--outlined .mdc-notched-outline__leading,
+    .mdc-text-field--outlined .mdc-notched-outline__notch,
+    .mdc-text-field--outlined .mdc-notched-outline__trailing {
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    .mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__leading,
+    .mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__notch,
+    .mdc-text-field--outlined.mdc-text-field--focused .mdc-notched-outline__trailing {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .mat-mdc-input-element,
+    .mat-mdc-floating-label,
+    .mat-mdc-form-field-hint,
+    textarea::placeholder {
+      color: #fff !important;
+    }
+
+    .mat-mdc-floating-label {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    .mat-mdc-form-field-error {
+      color: #ef9a9a;
+    }
   }
 }

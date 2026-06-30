@@ -2,3 +2,47 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.app-header-btn.mat-mdc-outlined-button {
+  --mdc-outlined-button-label-text-color: rgba(255, 255, 255, 0.9);
+  --mdc-outlined-button-outline-color: rgba(255, 255, 255, 0.45);
+  --mat-outlined-button-state-layer-color: #fff;
+  --mat-outlined-button-ripple-color: rgba(255, 255, 255, 0.12);
+  --mdc-outlined-button-container-color: transparent;
+  text-decoration: none;
+
+  .mdc-button__label {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .mdc-button__outline {
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.app-header-btn.mat-mdc-outlined-button:hover {
+  --mdc-outlined-button-label-text-color: #fff;
+  --mdc-outlined-button-outline-color: rgba(255, 255, 255, 0.75);
+
+  .mdc-button__label {
+    color: #fff;
+  }
+
+  .mdc-button__outline {
+    border-color: rgba(255, 255, 255, 0.75);
+  }
+}
+
+.app-header-btn.mat-mdc-outlined-button:focus-visible {
+  --mdc-outlined-button-label-text-color: #fff;
+  --mdc-outlined-button-outline-color: rgba(255, 255, 255, 0.85);
+
+  .mdc-button__label {
+    color: #fff;
+  }
+
+  .mdc-button__outline {
+    border-color: rgba(255, 255, 255, 0.85);
+  }
+}
+

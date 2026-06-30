@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "supportbot": {
+    "supportwizard": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/supportbot",
+            "outputPath": "dist/supportwizard",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -26,8 +26,13 @@
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
+              },
+              "src/assets/fundo.png",
+              "src/assets/magos.png"
             ],
             "styles": [
               "@angular/material/prebuilt-themes/indigo-pink.css",
@@ -45,8 +50,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "6kb",
+                  "maximumError": "8kb"
                 }
               ],
               "outputHashing": "all"
@@ -61,12 +66,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
-              "buildTarget": "supportbot:build:production"
+              "buildTarget": "supportwizard:build:production"
             },
             "development": {
-              "buildTarget": "supportbot:build:development"
+              "buildTarget": "supportwizard:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -74,7 +82,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "supportbot:build"
+            "buildTarget": "supportwizard:build"
           }
         },
         "test": {
@@ -87,8 +95,13 @@
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
+              },
+              "src/assets/fundo.png",
+              "src/assets/magos.png"
             ],
             "styles": [
               "@angular/material/prebuilt-themes/indigo-pink.css",

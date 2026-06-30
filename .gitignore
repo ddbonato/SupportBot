@@ -1,2 +1,4 @@
 .env
 .tools/
+backend/.frontend/
+backend/src/main/resources/static/
